@@ -1,19 +1,20 @@
-// Generated on 2014-07-06 using generator-webapp 0.4.9
+// Generated on 2014-07-07 using
+// generator-lessapp 0.4.13
 'use strict';
 
 // # Globbing
 // for performance reasons we're only matching one level down:
 // 'test/spec/{,*/}*.js'
-// use this if you want to recursively match all subfolders:
+// If you want to recursively match all subfolders, use:
 // 'test/spec/**/*.js'
 
 module.exports = function (grunt) {
 
-    // Load grunt tasks automatically
-    require('load-grunt-tasks')(grunt);
-
     // Time how long tasks take. Can help when optimizing build times
     require('time-grunt')(grunt);
+
+    // Load grunt tasks automatically
+    require('load-grunt-tasks')(grunt);
 
     // Configurable paths
     var config = {
@@ -47,6 +48,10 @@ module.exports = function (grunt) {
             gruntfile: {
                 files: ['Gruntfile.js']
             },
+            less: {
+                files: ['<%= config.app %>/styles/{,*/}*.less'],
+                tasks: ['less:server', 'autoprefixer']
+            },
             styles: {
                 files: ['<%= config.app %>/styles/{,*/}*.css'],
                 tasks: ['newer:copy:styles', 'autoprefixer']
@@ -78,6 +83,7 @@ module.exports = function (grunt) {
                         return [
                             connect.static('.tmp'),
                             connect().use('/bower_components', connect.static('./bower_components')),
+                            connect().use('/fonts', connect.static('<%= config.app %>/bower_components/bootstrap/dist/fonts')),
                             connect.static(config.app)
                         ];
                     }
@@ -92,6 +98,7 @@ module.exports = function (grunt) {
                             connect.static('.tmp'),
                             connect.static('test'),
                             connect().use('/bower_components', connect.static('./bower_components')),
+                            connect().use('/fonts', connect.static('<%= config.app %>/bower_components/bootstrap/dist/fonts')),
                             connect.static(config.app)
                         ];
                     }
@@ -143,6 +150,39 @@ module.exports = function (grunt) {
                 }
             }
         },
+        // Compiles LESS to CSS and generates necessary files if requested
+        less: {
+            options: {
+                paths: ['<%= config.app %>/bower_components'],
+            },
+            dist: {
+                options: {
+                    cleancss: true,
+                    report: 'gzip'
+                },
+                files: [{
+                    expand: true,
+                    cwd: '<%= config.app %>/styles',
+                    src: '*.less',
+                    dest: '.tmp/styles',
+                    ext: '.css'
+                }]
+            },
+            server: {
+                options: {
+                    sourceMap: true,
+                    sourceMapBasepath: '<%= config.app %>/',
+                    sourceMapRootpath: '../'
+                },
+                files: [{
+                    expand: true,
+                    cwd: '<%= config.app %>/styles',
+                    src: '*.less',
+                    dest: '.tmp/styles',
+                    ext: '.css'
+                }]
+            }
+        },
 
         // Add vendor prefixed styles
         autoprefixer: {
@@ -164,6 +204,9 @@ module.exports = function (grunt) {
             app: {
                 src: ['<%= config.app %>/index.html'],
                 exclude: ['bower_components/bootstrap/dist/js/bootstrap.js']
+            },
+            less: {
+                src: ['<%= config.app %>/styles/{,*/}*.less']
             }
         },
 
@@ -245,9 +288,9 @@ module.exports = function (grunt) {
             }
         },
 
-        // By default, your `index.html`'s <!-- Usemin block --> will take care of
-        // minification. These next options are pre-configured if you do not wish
-        // to use the Usemin blocks.
+        // By default, your `index.html`'s <!-- Usemin block --> will take care
+        // of minification. These next options are pre-configured if you do not
+        // wish to use the Usemin blocks.
         // cssmin: {
         //     dist: {
         //         files: {
@@ -289,9 +332,9 @@ module.exports = function (grunt) {
                 }, {
                     expand: true,
                     dot: true,
-                    cwd: 'bower_components/bootstrap/dist',
-                    src: ['fonts/*.*'],
-                    dest: '<%= config.dist %>'
+                    cwd: '<%= config.app %>/bower_components/bootstrap/dist/fonts/',
+                    src: ['*.*'],
+                    dest: '<%= config.dist %>/styles/fonts'
                 }]
             },
             styles: {
@@ -303,15 +346,34 @@ module.exports = function (grunt) {
             }
         },
 
+        // Generates a custom Modernizr build that includes only the tests you
+        // reference in your app
+        modernizr: {
+            dist: {
+                devFile: '<%= config.app %>/bower_components/modernizr/modernizr.js',
+                outputFile: '<%= config.dist %>/scripts/vendor/modernizr.js',
+                files: {
+                    src: [
+                        '<%= config.dist %>/scripts/{,*/}*.js',
+                        '<%= config.dist %>/styles/{,*/}*.css',
+                        '!<%= config.dist %>/scripts/vendor/*'
+                    ]
+                },
+                uglify: true
+            }
+        },
+
         // Run some tasks in parallel to speed up build process
         concurrent: {
             server: [
+                'less:server',
                 'copy:styles'
             ],
             test: [
                 'copy:styles'
             ],
             dist: [
+                'less:dist',
                 'copy:styles',
                 'imagemin',
                 'svgmin'
@@ -363,6 +425,7 @@ module.exports = function (grunt) {
         'cssmin',
         'uglify',
         'copy:dist',
+        'modernizr',
         'rev',
         'usemin',
         'htmlmin'
